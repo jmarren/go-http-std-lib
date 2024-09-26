@@ -11,10 +11,22 @@ import (
 
 func run(ctx context.Context, w io.Writer, r io.Reader, envfunc func(string) string, args []string) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
+	defer cancel()
 
 	mux := http.NewServeMux()
 
-	defer cancel()
+	AddRoutes(mux)
+
+	httpServer := &http.Server{
+		Addr:    "7071",
+		Handler: mux,
+	}
+
+	if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		fmt.Fprintf(os.Stderr, "error listening and serving: %s\n", err)
+	}
+
+	fmt.Fprintf(os.Stdout, "listeing on port 7071\n")
 
 	return nil
 }
